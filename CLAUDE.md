@@ -55,9 +55,11 @@ The **home page is built and covered** against `HOME-1`…`HOME-13`: header, ope
 
 The **shop is built and covered** against `SHOP-1`…`SHOP-13`: grid at `/shop`, item pages at `/shop/[slug]` (prerendered via `generateStaticParams`, `dynamicParams = false`), and a cart plus manual checkout at `/shop/cart`. The cart is an external store over `localStorage` (`src/components/shop/cart-store.ts`) read through `useSyncExternalStore` — there is no provider, and no React state mirrors it. Checkout is deliberately **not** a payment processor: it collects Zelle/Venmo/cash and hands off a prefilled email, because there is no server. Admin item management is out of scope and untagged.
 
-Copy and catalogue are visibly-marked placeholders in `src/content/site.ts` and `src/content/shop.ts` — replacing either is a one-file edit.
+**Build a Bunny is built and covered** against `BUNNY-1`…`BUNNY-11`: a configurator at `/build-a-bunny` with a live itemised estimate. It deliberately does **not** touch the shop cart — it is made to order, so it ends in a *request*, not a purchase, handed off as a prefilled email like SHOP-13. All the rules (naked bunnies carry no outfit colour, unknown ids are dropped, add-ons follow catalogue order) live in pure functions in `src/lib/bunny.ts` and go through `normaliseConfiguration`, so no React state can hold an invalid combination. The request payload is option ids only, never prices — see `docs/backend.md` §3 for why.
 
-The remaining four routes (`/schedule`, `/commission`, `/build-a-bunny`, `/portfolio`) are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves.
+Copy and catalogues are visibly-marked placeholders in `src/content/site.ts`, `src/content/shop.ts`, and `src/content/bunny.ts` — replacing any of them is a one-file edit.
+
+The remaining three routes (`/schedule`, `/commission`, `/portfolio`) are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves.
 
 Money is integer cents everywhere (`src/lib/money.ts`); it becomes a string only at display.
 
