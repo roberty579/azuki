@@ -59,7 +59,9 @@ The **shop is built and covered** against `SHOP-1`…`SHOP-13`: grid at `/shop`,
 
 Copy and catalogues are visibly-marked placeholders in `src/content/site.ts`, `src/content/shop.ts`, and `src/content/bunny.ts` — replacing any of them is a one-file edit.
 
-The remaining three routes (`/schedule`, `/commission`, `/portfolio`) are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves.
+The **portfolio is built and covered** against `PORT-1`…`PORT-7`: a gallery at `/portfolio` grouped by category, and piece pages at `/portfolio/[slug]` (prerendered via `generateStaticParams`, `dynamicParams = false`). It is a typed content module rather than a database table — read-only content that never changes per request, per `docs/backend.md` §6 — so it prerenders. Deliberately no prices, no cart, and no shared components with the shop: a portfolio piece routes to a commission, not a purchase.
+
+The remaining two routes (`/schedule`, `/commission`) are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves.
 
 Money is integer cents everywhere (`src/lib/money.ts`); it becomes a string only at display.
 
