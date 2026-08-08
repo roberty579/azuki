@@ -120,23 +120,36 @@ and empties the cart.
 **Acceptance:** an incomplete form does not submit and marks each missing field; a valid one shows
 the summary and payment instructions and leaves the cart empty.
 
-**Status:** there is no server, so the summary is handed off as a prefilled email to the shop's
-contact address rather than posted anywhere. Replacing that with a real endpoint must not change any
-validation above it.
+**Status:** the order is written to Postgres by a Server Action, and the summary shows the totals
+that action computed. Every figure is the server's: the browser sends slugs and quantities only, so
+an order cannot claim a price it was not charged. Payment is still arranged manually afterwards —
+SHOP-9's deferral is unchanged.
+
+**Note:** the form's validation is UX, not enforcement. A Server Action is a public POST endpoint
+reachable without the form, so every rule above is re-applied server-side. Both copies must exist,
+and the server's is the one that counts.
 
 ## Presentation
 
-### SHOP-11 — The catalogue lives in one typed module
+### SHOP-11 — The catalogue has one editable source
 
-Every product — name, copy, price, image, stock, details — comes from `src/content/shop.ts`.
-Components and tests read from it; neither hardcodes product data.
+Every product — name, copy, price, image, stock, details — is defined in one place a human edits,
+`src/content/shop.ts`, and loaded into the database by `npm run db:seed`. Pages read the database;
+no component or test hardcodes product data.
 
-**Acceptance:** the module is typed; slugs are unique, lowercase-hyphenated, and free of collisions
-with sibling routes such as `/shop/cart`; every item has non-empty copy, a local image path with no
-query string, non-empty alt text, and a non-negative whole-cent price.
+**Acceptance:** the source module is typed; slugs are unique, lowercase-hyphenated, and free of
+collisions with sibling routes such as `/shop/cart`; every item has non-empty copy, a local image
+path with no query string, non-empty alt text, and a non-negative whole-cent price. The same rules
+hold for rows that did not come from the seed.
 
-**Status:** every value is a visibly-marked placeholder. Replacing them with real products must stay
-a one-file edit.
+**Status:** every value is a visibly-marked placeholder. Replacing them with real products stays a
+one-file edit followed by a re-seed.
+
+**Note:** this module used to be what the pages read. It is now the seed source, which is why
+`__tests__/shop-content.test.ts` still earns its place — it guards the input, where a malformed
+price or a colliding slug is actually introduced. The rules that must also survive a write from psql
+or a future admin screen are database constraints instead: a unique slug, non-negative stock, and
+image paths restricted to local `/…` with no query string.
 
 ### SHOP-12 — Money is handled in whole cents
 
@@ -156,12 +169,22 @@ sum of its line totals exactly; formatting a non-integer is an error rather than
 | 2026-08-08 | Admin item management out of scope for this pass. |
 | 2026-08-08 | Cart lives in browser storage, keyed by slug only (SHOP-6). |
 | 2026-08-08 | Cart link in the shop's own bar, not the site header, to preserve HOME-2 (SHOP-7). |
+| 2026-08-08 | Orders go to Postgres via a Server Action; the email hand-off is retired (SHOP-13). |
+| 2026-08-08 | Stock decrements when the order is placed, not when payment clears (SHOP-10). |
+| 2026-08-08 | The catalogue module becomes the seed source; pages read the database (SHOP-11). |
+| 2026-08-08 | Shop routes render dynamically — prerendered stock would advertise sold-out items. |
 
 ## Open items
 
 - Whether the shop needs a real payment processor — deferred, see SHOP-9.
-- Where order requests should go once a backend exists: email, database, or the admin dashboard in
-  `requirements/admin_requirements.md`.
-- Whether stock should decrement when an order request is sent, which needs a server to be
-  meaningful.
-- Shipping cost and tax are not modelled; the subtotal is currently the total.
+- **Releasing stock on cancellation.** Stock is held from the moment an order is placed, so an
+  abandoned request holds inventory until someone intervenes — and nothing yet restores it when an
+  order is cancelled. This is the cost of the decision above, and it needs the admin page.
+- **The shipping address is one free-text field.** The database has a single `shipping_address`
+  column because the form collects a single textarea. Splitting both into line 1 / line 2 / city /
+  state / zip is a UI change with its own tests; `commissions` is already structured, so the two
+  disagree until then.
+- Shipping cost and tax are not modelled; the subtotal is currently the total. Both are separate
+  columns already, so adding them does not mean discovering that "subtotal" meant "total".
+- Admin item management still has no home. Until it exists, changing the catalogue means editing
+  `src/content/shop.ts` and re-seeding.

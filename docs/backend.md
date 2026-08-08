@@ -1,8 +1,29 @@
 # Backend & database — decisions and notes
 
 Captured 2026-08-08, while the app was still fully static (16 prerendered routes, no server code).
-Nothing here is built yet. This is the reasoning behind the decisions, so the next session does not
-have to re-derive it.
+This is the reasoning behind the decisions, so the next session does not have to re-derive it.
+
+> **Update, 2026-08-08 — the first pass is built.** Postgres is wired up, the shop reads from it,
+> and checkout is a Server Action implementing §3's contract. What changed against this document as
+> written:
+>
+> - **§7's "do not migrate the shop to Postgres yet" no longer applies.** That advice assumed admin
+>   item management was out of scope. `schema.sql` arrived with `products`, `product_images` and
+>   `admin_users`, so the premise changed. The shop went first for a different reason than §7
+>   anticipated: it was the only surface with tests capable of proving the migration was faithful.
+>   113 E2E specs passed against Postgres unmodified.
+> - **§11 was wrong that the cart does not change.** It was right that storing only slugs limits the
+>   blast radius, but `cart-store.ts` resolved those slugs by importing the catalogue *in the
+>   browser*, which stops working when the catalogue is in Postgres. Resolution moved to
+>   `use-cart.ts`, and the shop layout passes the catalogue down.
+> - **Money stays NUMERIC(10,2)**, converted at the boundary by `centsFromNumeric` in
+>   `src/lib/money.ts`. The scale is what guarantees no third decimal reaches it. A CHECK constraint
+>   was tried and removed — Postgres rounds to scale *before* evaluating constraints, so
+>   `col = round(col, 2)` can never fail.
+> - **Stock decrements on order**, which §3 step 4 implied but did not state. Without it the row
+>   lock has nothing to protect.
+>
+> Sections below are otherwise unchanged and still describe the intended design.
 
 Related: `requirements/shop_requirements.md` (SHOP-9, SHOP-13 open items),
 `requirements/admin_requirements.md`, `requirements/common_requirements.md` §10.
@@ -162,10 +183,12 @@ let that page's real needs define the schema. A schema designed in the abstract 
 documents will be wrong in ways nothing surfaces until something uses it; a schema designed while
 building the commission form will be right, because the form says what fields actually exist.
 
-**Do not migrate the shop to Postgres yet.** `src/content/shop.ts` works, is tested, and the
-catalogue is small enough to hand-edit. Moving it buys exactly one thing — admin item management
-without a deploy — which is out of scope by our own decision. Do it as part of the admin page so one
-piece of work covers both.
+~~**Do not migrate the shop to Postgres yet.**~~ *Superseded — see the update at the top.* The
+argument was that moving the catalogue buys only admin item management, which was out of scope. Once
+a schema arrived covering `products` and `admin_users`, that stopped being true. The shop also
+turned out to be the right *first* migration for a reason this section missed: it was the only
+surface whose existing tests could tell us whether the move was faithful. A page with no tests
+teaches you nothing when it works.
 
 ## 8. Consequences to plan for
 

@@ -4,12 +4,45 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ```bash
 npm install
+cp .env.example .env.local     # then set your Postgres password in it
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000). Edits to `src/app/page.tsx` hot-reload.
 
 Use npm, not yarn/pnpm/bun — `package-lock.json` is committed and is what CI installs from.
+
+### The database
+
+The shop reads and writes Postgres; the rest of the site does not need it yet. You need a local
+Postgres and two databases — one for the app, one for the integration tests, which truncate tables
+and must never point at the first:
+
+```bash
+psql -U postgres -c "CREATE DATABASE crochet;" -c "CREATE DATABASE crochet_test;"
+```
+
+Put both connection strings in `.env.local` (gitignored; `.env.example` is the committed template).
+**Never** prefix a database variable with `NEXT_PUBLIC_` — that inlines it into the JavaScript sent
+to every visitor.
+
+```bash
+npm run db:generate      # after editing src/db/schema.ts, derive a migration
+npm run db:migrate       # apply migrations       (--fresh drops the schema first)
+npm run db:migrate:test  # apply them to the test database
+npm run db:seed          # load src/content/shop.ts into the database
+npm run db:reset         # clear orders, restore stock
+npm run db:studio        # browse the data
+```
+
+`src/db/schema.ts` is authoritative — migrations are generated *from* it, and the TypeScript types
+come from it. `docs/schema-original.sql` is the SQL this was converted from and is historical;
+editing it changes nothing.
+
+`npm run build` does **not** need a database: the routes that query it render dynamically, so
+nothing is prerendered from it.
 
 ## Commands
 
@@ -24,14 +57,29 @@ npm run typecheck  # tsc --noEmit
 ### Tests
 
 ```bash
-npm run test       # unit + component tests (Vitest), one pass
-npm run test:watch # the same, re-running on save
-npm run test:e2e   # end-to-end tests (Playwright)
+npm run test             # unit + component tests (Vitest, jsdom), one pass
+npm run test:watch       # the same, re-running on save
+npm run test:integration # server code against a real Postgres (Vitest, node)
+npm run test:e2e         # end-to-end tests (Playwright)
 ```
+
+Three layers, split by what each can observe:
+
+| Layer | Sees | Does not see |
+|---|---|---|
+| `__tests__/` | component markup, behaviour, accessibility roles | CSS, images, routing, the database |
+| `integration/` | the database, Server Actions called directly | anything rendered |
+| `e2e/` | the real thing in a real browser | internals |
+
+`integration/` exists for the cases the UI cannot reach: a checkout POSTed without the form, a
+replayed idempotency key, two customers racing for the last item. It runs against
+`TEST_DATABASE_URL` and truncates between tests, and refuses to start if that variable is missing or
+equal to `DATABASE_URL`.
 
 `npm run test:e2e` builds the app and starts a server itself — you do **not** need `npm run dev`
 running first. It will reuse a server already on port 3000, so if one is running from an older
-build, stop it first or you will test stale code.
+build, stop it first or you will test stale code. It also resets and re-seeds the database before
+the suite, because checkout decrements stock and the run would otherwise only pass once.
 
 Narrowing a run:
 
