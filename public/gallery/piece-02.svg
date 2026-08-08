@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Placeholder image">
+  <rect width="800" height="800" fill="#eef0e8" />
+  <path d="M250 220h300l70 90-90 60v240H270V370l-90-60z" fill="#b9a8c9" />
+  <path d="M350 220h100l-50 70z" fill="#f6ece6" />
+  <g fill="none" stroke="#8f7ba3" stroke-width="9" stroke-linecap="round" opacity="0.6">
+    <path d="M300 440h200" />
+    <path d="M300 500h200" />
+    <path d="M300 560h200" />
+  </g>
+  <text x="400" y="756" font-family="system-ui, sans-serif" font-size="30" fill="#6f6480" text-anchor="middle">placeholder</text>
+</svg>

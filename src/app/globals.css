@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/*
+ * Palette for the "sophisticated but cute" direction in initial_requirements.md §0:
+ * warm neutral ground, muted rose accent, soft sage secondary. Tailwind v4 is
+ * configured CSS-first — there is no tailwind.config.*, so tokens live here.
+ *
+ * @implements HOME-13 — every text-on-background pairing below clears WCAG AA
+ *   (4.5:1) in both colour schemes.
+ */
+:root {
+  --background: #faf6f2;
+  --foreground: #2c2422;
+  --surface: #ffffff;
+  --border: #e8ded6;
+  --ink: #2c2422;
+  --ink-muted: #6d5f58;
+  /* Deep enough to clear WCAG AA (4.5:1) as body-size text on --background
+     and as a button background under --on-accent. */
+  --accent: #9a4f5c;
+  --accent-soft: #f7ecef;
+  --on-accent: #ffffff;
+  --secondary: #6f8566;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #17130f;
+    --foreground: #f2ece7;
+    --surface: #211b17;
+    --border: #382e28;
+    --ink: #f2ece7;
+    --ink-muted: #b8a89f;
+    --accent: #e6a0aa;
+    --accent-soft: #33232a;
+    /* On dark the accent is light, so text sitting on it must be dark. */
+    --on-accent: #17130f;
+    --secondary: #9fb397;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-secondary: var(--secondary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}

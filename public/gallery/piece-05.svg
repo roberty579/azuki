@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Placeholder image">
+  <rect width="800" height="800" fill="#f7ecef" />
+  <g transform="translate(400 390)">
+    <g fill="#dd9aab">
+      <ellipse cx="0" cy="-110" rx="62" ry="90" />
+      <ellipse cx="0" cy="110" rx="62" ry="90" />
+      <ellipse cx="-110" cy="0" rx="90" ry="62" />
+      <ellipse cx="110" cy="0" rx="90" ry="62" />
+      <ellipse cx="-78" cy="-78" rx="70" ry="70" opacity="0.85" />
+      <ellipse cx="78" cy="78" rx="70" ry="70" opacity="0.85" />
+    </g>
+    <circle cx="0" cy="0" r="66" fill="#e8c97a" />
+  </g>
+  <text x="400" y="756" font-family="system-ui, sans-serif" font-size="30" fill="#a8697d" text-anchor="middle">placeholder</text>
+</svg>
