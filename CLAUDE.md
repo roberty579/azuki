@@ -51,6 +51,14 @@ Routes, per `src/content/navigation.ts`: `/`, `/schedule`, `/commission`, `/buil
 
 ## Current state
 
-The **home page is built and covered**: header, opening section, calls to action, gallery, and contact links, against `HOME-1`…`HOME-13`. `src/content/site.ts` holds every customer-facing string as a visibly-marked placeholder — real copy is a one-file edit.
+The **home page is built and covered** against `HOME-1`…`HOME-13`: header, opening section, calls to action, gallery, contact links.
 
-The other five routes are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves. Each still needs building from its spec in `requirements/`.
+The **shop is built and covered** against `SHOP-1`…`SHOP-13`: grid at `/shop`, item pages at `/shop/[slug]` (prerendered via `generateStaticParams`, `dynamicParams = false`), and a cart plus manual checkout at `/shop/cart`. The cart is an external store over `localStorage` (`src/components/shop/cart-store.ts`) read through `useSyncExternalStore` — there is no provider, and no React state mirrors it. Checkout is deliberately **not** a payment processor: it collects Zelle/Venmo/cash and hands off a prefilled email, because there is no server. Admin item management is out of scope and untagged.
+
+Copy and catalogue are visibly-marked placeholders in `src/content/site.ts` and `src/content/shop.ts` — replacing either is a one-file edit.
+
+The remaining four routes (`/schedule`, `/commission`, `/build-a-bunny`, `/portfolio`) are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves.
+
+Money is integer cents everywhere (`src/lib/money.ts`); it becomes a string only at display.
+
+There is **no backend and no database yet** — every route prerenders. `docs/backend.md` holds the decisions already made about adding one (it belongs in this project, not a separate service; what forces it is Schedule/Commission/Admin, not the shop; the checkout contract a Server Action must enforce). Read it before starting any server-side work.

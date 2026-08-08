@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Placeholder image">
+  <rect width="800" height="800" fill="#eef3f5"/>
+  <rect x="215" y="250" width="370" height="330" rx="30" fill="#9dbcc9"/><g fill="#e4d3c0" opacity=".6"><rect x="255" y="290" width="120" height="120" rx="16"/><rect x="425" y="420" width="120" height="120" rx="16"/></g>
+  <g fill="none" stroke="#7fa2b1" stroke-width="9" stroke-linecap="round" opacity="0.5">
+    <path d="M180 650q40-34 80 0t80 0t80 0t80 0t80 0t80 0"/>
+    <path d="M180 700q40-34 80 0t80 0t80 0t80 0t80 0t80 0"/>
+  </g>
+  <text x="400" y="766" font-family="system-ui, sans-serif" font-size="30" fill="#8a6a5c" text-anchor="middle">placeholder</text>
+</svg>
