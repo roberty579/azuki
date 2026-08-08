@@ -3,28 +3,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToCart from "@/components/shop/add-to-cart";
-import { findProduct, products } from "@/content/shop";
+import { getProduct } from "@/db/products";
 import { formatPrice } from "@/lib/money";
 
 type PageParams = { params: Promise<{ slug: string }> };
 
-/** Prerenders one page per catalogue item at build time. */
-export async function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
-}
-
 /**
- * The catalogue is a fixed list, so anything not generated above is a genuine
- * 404 rather than something to render on demand.
+ * No generateStaticParams and no dynamicParams: the catalogue is no longer a
+ * fixed list known at build time, and prerendering stock would show sold-out
+ * items as available. An unknown slug still 404s — now because getProduct
+ * returns nothing and notFound() runs, rather than because the route was never
+ * generated. Same status code, same test.
+ *
+ * A useful side effect: nothing here prerenders, so `next build` does not need
+ * a reachable database.
  */
-export const dynamicParams = false;
-
 export async function generateMetadata({
   params,
 }: PageParams): Promise<Metadata> {
   // Next 16: params is a Promise and must be awaited.
   const { slug } = await params;
-  const product = findProduct(slug);
+  const product = await getProduct(slug);
   if (!product) return {};
 
   return { title: product.name, description: product.summary };
@@ -35,7 +34,7 @@ export async function generateMetadata({
  */
 export default async function ProductPage({ params }: PageParams) {
   const { slug } = await params;
-  const product = findProduct(slug);
+  const product = await getProduct(slug);
   if (!product) notFound();
 
   return (

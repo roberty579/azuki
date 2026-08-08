@@ -4,6 +4,9 @@ const baseURL = "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Clears orders and restores stock before the suite. Checkout decrements
+  // stock, so without this a second run fails on depleted inventory.
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

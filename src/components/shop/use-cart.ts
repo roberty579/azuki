@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
-import { findProduct, type Product } from "@/content/shop";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useProductLookup } from "./catalogue";
+import type { Product } from "@/lib/product";
 import {
   addLine,
   clearLines,
@@ -13,9 +14,16 @@ import {
 } from "./cart-store";
 
 /**
- * React's view of the cart store.
+ * React's view of the cart store, resolved against the catalogue.
  *
  * @implements SHOP-5, SHOP-6
+ *
+ * The store persists slugs and quantities; this is where they become products.
+ * It is also where a stored cart is reconciled with reality — an item since
+ * removed from the catalogue is dropped, and a quantity above stock is clamped,
+ * on every read rather than only at write time. That means a cart stored a week
+ * ago is correct as soon as it is displayed, without needing to know what
+ * changed in between.
  */
 
 export type ResolvedLine = {
@@ -41,17 +49,34 @@ export function useHydrated(): boolean {
 
 export function useCart() {
   const lines = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const lookup = useProductLookup();
   const ready = useHydrated();
+
+  /** Stock caps come from the catalogue, so callers do not have to carry them. */
+  const add = useCallback(
+    (slug: string, quantity = 1) =>
+      addLine(slug, quantity, lookup(slug)?.stock ?? 0),
+    [lookup],
+  );
+
+  const setQuantity = useCallback(
+    (slug: string, quantity: number) =>
+      setLineQuantity(slug, quantity, lookup(slug)?.stock ?? 0),
+    [lookup],
+  );
 
   return useMemo(() => {
     const resolved = lines.flatMap<ResolvedLine>((line) => {
-      const product = findProduct(line.slug);
-      if (!product) return [];
+      const product = lookup(line.slug);
+      // Gone from the catalogue, or sold out since it was added.
+      if (!product || product.stock < 1) return [];
+
+      const quantity = Math.min(line.quantity, product.stock);
       return [
         {
           product,
-          quantity: line.quantity,
-          lineTotalCents: product.priceCents * line.quantity,
+          quantity,
+          lineTotalCents: product.priceCents * quantity,
         },
       ];
     });
@@ -65,10 +90,10 @@ export function useCart() {
         0,
       ),
       ready,
-      add: addLine,
-      setQuantity: setLineQuantity,
+      add,
+      setQuantity,
       remove: removeLine,
       clear: clearLines,
     };
-  }, [lines, ready]);
+  }, [lines, lookup, ready, add, setQuantity]);
 }

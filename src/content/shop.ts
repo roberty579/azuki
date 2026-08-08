@@ -1,38 +1,25 @@
 /**
- * The shop catalogue.
+ * The shop catalogue — the seed source.
  *
  * @implements SHOP-11
  *
+ * This is the file a human edits to change what the shop sells. It is no longer
+ * what the pages read: `npm run db:seed` loads it into Postgres, and the pages
+ * read from there via src/db/products.ts. That split is why
+ * __tests__/shop-content.test.ts still earns its place — it guards the input to
+ * the seed, which is exactly where a malformed price or a colliding slug would
+ * be introduced.
+ *
  * Everything here is PLACEHOLDER content, same contract as content/site.ts:
- * swapping in real products is a one-file edit, and tests import this module
- * rather than hardcoding names or prices.
+ * swapping in real products stays a one-file edit followed by a re-seed.
  *
  * Prices are integer cents. Money is never a float — 0.1 + 0.2 does not equal
  * 0.3, and a shop that rounds wrongly on a subtotal loses trust fast.
  */
 
-export type Product = {
-  /** URL segment under /shop. Lowercase, hyphenated, unique. */
-  slug: string;
-  name: string;
-  /** One-line summary shown on the grid card. */
-  summary: string;
-  /** Full description shown on the detail page. */
-  description: string;
-  /** Price in whole cents, e.g. 4200 for $42.00. */
-  priceCents: number;
-  /** Path under /public. No query strings — Next 16 would need images.localPatterns.search. */
-  image: string;
-  /** Descriptive alt text. Never empty; these images carry meaning. */
-  alt: string;
-  /**
-   * Units available to order. 0 means sold out: the item still lists and its
-   * page still resolves, but it cannot be added to the cart.
-   */
-  stock: number;
-  /** Shown on the detail page so buyers know what they are getting. */
-  details: readonly string[];
-};
+import type { Product } from "@/lib/product";
+
+export type { Product };
 
 export const products: readonly Product[] = [
   {

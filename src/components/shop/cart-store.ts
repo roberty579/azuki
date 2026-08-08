@@ -1,5 +1,3 @@
-import { findProduct } from "@/content/shop";
-
 /**
  * The cart, backed by localStorage.
  *
@@ -12,6 +10,14 @@ import { findProduct } from "@/content/shop";
  * Only `{ slug, quantity }` is persisted. Names, prices, and stock are always
  * re-read from the catalogue, so a cart stored last week can never display a
  * stale price.
+ *
+ * This module knows nothing about the catalogue. It used to import the content
+ * module directly to check stock, which only worked while the catalogue was a
+ * file the browser could read too; products now live in Postgres. So stock caps
+ * arrive as an argument from callers that already have the product, and
+ * resolving a stored cart against the catalogue — dropping items that no longer
+ * exist, clamping quantities that exceed stock — happens in use-cart.ts, which
+ * is where the catalogue is.
  */
 
 export type CartLine = { slug: string; quantity: number };
@@ -24,20 +30,22 @@ const EMPTY: CartLine[] = [];
 let cache: CartLine[] | null = null;
 const listeners = new Set<() => void>();
 
-/** Drops unknown slugs and clamps quantities, so bad stored data cannot break the UI. */
+/**
+ * Shape validation only — corrupt JSON and entries that are not
+ * `{ slug: string, quantity: number }`. Whether the slug still exists, and
+ * whether the quantity exceeds stock, are catalogue questions answered on read.
+ */
 function sanitise(value: unknown): CartLine[] {
   if (!Array.isArray(value)) return EMPTY;
 
   const lines = value.flatMap((entry) => {
     if (typeof entry !== "object" || entry === null) return [];
     const { slug, quantity } = entry as Partial<CartLine>;
-    if (typeof slug !== "string" || typeof quantity !== "number") return [];
+    if (typeof slug !== "string" || slug === "") return [];
+    if (typeof quantity !== "number" || !Number.isFinite(quantity)) return [];
 
-    const product = findProduct(slug);
-    if (!product) return [];
-
-    const clamped = Math.min(Math.floor(quantity), product.stock);
-    return clamped > 0 ? [{ slug, quantity: clamped }] : [];
+    const whole = Math.floor(quantity);
+    return whole > 0 ? [{ slug, quantity: whole }] : [];
   });
 
   return lines.length > 0 ? lines : EMPTY;
@@ -100,13 +108,22 @@ export function getServerSnapshot(): CartLine[] {
   return EMPTY;
 }
 
-export function addLine(slug: string, quantity = 1) {
-  const product = findProduct(slug);
-  if (!product || product.stock < 1) return;
+/**
+ * @implements SHOP-4, SHOP-10 — adding accumulates onto an existing line rather
+ *   than duplicating it, and never exceeds `maxQuantity`.
+ *
+ * `maxQuantity` is the product's stock. Passing 0 is how a sold-out item is
+ * refused, which callers get for free by passing `product.stock`.
+ */
+export function addLine(slug: string, quantity: number, maxQuantity: number) {
+  if (maxQuantity < 1 || quantity < 1) return;
 
   const current = getSnapshot();
   const existing = current.find((line) => line.slug === slug);
-  const clamped = Math.min((existing?.quantity ?? 0) + quantity, product.stock);
+  const clamped = Math.min(
+    (existing?.quantity ?? 0) + Math.floor(quantity),
+    maxQuantity,
+  );
 
   commit(
     existing
@@ -117,17 +134,20 @@ export function addLine(slug: string, quantity = 1) {
   );
 }
 
-export function setLineQuantity(slug: string, quantity: number) {
-  const product = findProduct(slug);
-  if (!product) return;
-
+/** @implements SHOP-5, SHOP-10 — below one removes the line; above stock clamps. */
+export function setLineQuantity(
+  slug: string,
+  quantity: number,
+  maxQuantity: number,
+) {
   const current = getSnapshot();
-  if (quantity < 1) {
+
+  if (quantity < 1 || maxQuantity < 1) {
     commit(current.filter((line) => line.slug !== slug));
     return;
   }
 
-  const clamped = Math.min(Math.floor(quantity), product.stock);
+  const clamped = Math.min(Math.floor(quantity), maxQuantity);
   commit(
     current.map((line) =>
       line.slug === slug ? { ...line, quantity: clamped } : line,

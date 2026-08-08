@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/money";
-import type { Product } from "@/content/shop";
+import type { Product } from "@/lib/product";
 
 /**
  * One tile in the browsing grid.

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "./use-cart";
-import type { Product } from "@/content/shop";
+import type { Product } from "@/lib/product";
 
 /**
  * Quantity picker plus the add button on a product page.

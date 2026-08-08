@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ProductCard from "@/components/shop/product-card";
-import { products } from "@/content/shop";
+import { listProducts } from "@/db/products";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -9,8 +9,14 @@ export const metadata: Metadata = {
 
 /**
  * @implements SHOP-1 — gallery-style browsing grid of everything for sale.
+ *
+ * Rendered per request rather than prerendered: stock changes on every order,
+ * and a cached grid would advertise sold-out items as available. ISR with
+ * revalidation on write is the optimisation once this is proven.
  */
-export default function ShopPage() {
+export default async function ShopPage() {
+  const products = await listProducts();
+
   return (
     <main className="flex w-full flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
       <div className="flex flex-col gap-3">

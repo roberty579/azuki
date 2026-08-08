@@ -3,31 +3,34 @@
 import { useMemo, useState } from "react";
 import { useCart } from "./use-cart";
 import { formatPrice } from "@/lib/money";
+import { submitOrder, type CheckoutResult } from "@/lib/actions/orders";
 import {
   availablePaymentMethods,
   paymentMethods,
   pickupLocations,
   type FulfilmentMethod,
 } from "@/content/ordering";
-import { site } from "@/content/site";
 
 /**
- * Manual checkout: collects the buyer's details and hands off an order request.
+ * Checkout: collects the buyer's details and submits the order.
  *
  * @implements SHOP-8 — shipping address or a local drop-off, never both.
  * @implements SHOP-9 — cash is offered for local pick-up only.
  * @implements SHOP-13 — a completed request produces the order summary and
  *   payment instructions, and clears the cart.
  *
- * There is no server yet, so submission opens a prefilled email to the shop
- * rather than posting anywhere. Replacing this with a real endpoint should not
- * change any of the validation above it.
+ * The validation here is UX: it catches mistakes before a round trip and points
+ * at the field that needs fixing. It is *not* the enforcement — every rule is
+ * re-applied in the Server Action, which is reachable by direct POST without
+ * this form. Both copies have to exist.
  */
 
 type Errors = Partial<Record<string, string>>;
 
+type ConfirmedOrder = Extract<CheckoutResult, { ok: true }>["order"];
+
 export default function OrderForm() {
-  const { lines, subtotalCents, clear } = useCart();
+  const { lines, clear } = useCart();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -37,7 +40,16 @@ export default function OrderForm() {
   const [pickup, setPickup] = useState("");
   const [payment, setPayment] = useState("");
   const [errors, setErrors] = useState<Errors>({});
-  const [submitted, setSubmitted] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [confirmed, setConfirmed] = useState<ConfirmedOrder | null>(null);
+
+  /**
+   * One key per mounted checkout, so every click of Submit carries the same
+   * one. Regenerating per click would defeat the purpose — the server would see
+   * two distinct orders rather than a replay.
+   */
+  const [attemptKey] = useState(() => crypto.randomUUID());
 
   const allowedPayments = useMemo(
     () => availablePaymentMethods(fulfilment),
@@ -83,44 +95,57 @@ export default function OrderForm() {
     return next;
   }
 
-  function buildSummary(): string {
-    const method = paymentMethods.find((m) => m.id === payment);
-    const items = lines
-      .map(
-        (line) =>
-          `- ${line.product.name} x${line.quantity} — ${formatPrice(line.lineTotalCents)}`,
-      )
-      .join("\n");
-
-    return [
-      `Order request from ${firstName.trim()} ${lastName.trim()}`,
-      `Email: ${email.trim()}`,
-      "",
-      "Items:",
-      items,
-      `Subtotal: ${formatPrice(subtotalCents)}`,
-      "",
-      fulfilment === "shipping"
-        ? `Ship to:\n${address.trim()}`
-        : `Local pick-up: ${pickup}`,
-      `Payment: ${method?.label ?? payment}`,
-    ].join("\n");
-  }
-
-  function handleSubmit(event: { preventDefault: () => void }) {
+  async function handleSubmit(event: { preventDefault: () => void }) {
     event.preventDefault();
 
     const found = validate();
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    const summary = buildSummary();
-    setSubmitted(summary);
-    clear();
+    setPending(true);
+    try {
+      /**
+       * Slugs and quantities only. No prices leave the browser — the server
+       * reads them from the catalogue and computes the totals itself, so an
+       * order can never claim a price it was not charged (docs/backend.md §3).
+       *
+       * The idempotency key is generated once per checkout attempt, not per
+       * click, so a double-click sends the same key and gets the same order.
+       */
+      const result = await submitOrder({
+        idempotencyKey: attemptKey,
+        items: lines.map((line) => ({
+          slug: line.product.slug,
+          quantity: line.quantity,
+        })),
+        buyer: {
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+        },
+        fulfilment,
+        shippingAddress: fulfilment === "shipping" ? address.trim() : undefined,
+        pickupLocation: fulfilment === "pickup" ? pickup : undefined,
+        paymentMethod: payment as "zelle" | "venmo" | "cash",
+      });
+
+      if (!result.ok) {
+        setErrors(result.fieldErrors ?? {});
+        setSubmitError(result.error);
+        return;
+      }
+
+      setSubmitError(null);
+      setConfirmed(result.order);
+      clear();
+    } finally {
+      setPending(false);
+    }
   }
 
-  if (submitted) {
-    const method = paymentMethods.find((m) => m.id === payment);
+  if (confirmed) {
+    const method = paymentMethods.find((m) => m.id === confirmed.paymentMethod);
+
     return (
       <section
         aria-labelledby="order-sent"
@@ -130,15 +155,37 @@ export default function OrderForm() {
           Order request ready
         </h2>
         <p className="text-base text-ink-muted">{method?.instructions}</p>
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl bg-background p-4 text-sm text-ink">
-          {submitted}
-        </pre>
-        <a
-          href={`mailto:${site.email}?subject=${encodeURIComponent("Shop order request")}&body=${encodeURIComponent(submitted)}`}
-          className="inline-flex h-12 w-fit items-center justify-center rounded-full bg-accent px-6 text-base font-medium text-on-accent transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
-          Send to {site.email}
-        </a>
+
+        {/* Every figure below came back from the server, which recomputed it
+            from the catalogue. Nothing here is the browser's arithmetic. */}
+        <dl className="flex flex-col gap-2 text-base">
+          <div className="flex justify-between gap-4">
+            <dt className="text-ink-muted">Reference</dt>
+            <dd className="font-mono text-sm text-ink">{confirmed.id}</dd>
+          </div>
+          {confirmed.lines.map((line) => (
+            <div key={line.name} className="flex justify-between gap-4">
+              <dt className="text-ink-muted">
+                {line.name} &times;{line.quantity}
+              </dt>
+              <dd className="tabular-nums text-ink">
+                {formatPrice(line.lineTotalCents)}
+              </dd>
+            </div>
+          ))}
+          <div className="flex justify-between gap-4 border-t border-border pt-2 font-semibold">
+            <dt className="text-ink">Total</dt>
+            <dd className="tabular-nums text-ink">
+              {formatPrice(confirmed.totalCents)}
+            </dd>
+          </div>
+        </dl>
+
+        <p className="text-sm text-ink-muted">
+          {confirmed.fulfilment === "shipping"
+            ? "We'll be in touch to confirm shipping."
+            : "We'll be in touch to arrange the drop-off."}
+        </p>
       </section>
     );
   }
@@ -265,11 +312,23 @@ export default function OrderForm() {
         <FieldError message={errors.payment} />
       </fieldset>
 
+      {/* Errors the server raised that belong to no single field — a race on
+          stock, or a rule the form thought it had already satisfied. */}
+      {submitError && (
+        <p
+          role="alert"
+          className="rounded-xl border border-accent bg-accent-soft px-4 py-3 text-sm font-medium text-accent"
+        >
+          {submitError}
+        </p>
+      )}
+
       <button
         type="submit"
-        className="inline-flex h-12 w-fit items-center justify-center rounded-full bg-accent px-6 text-base font-medium text-on-accent transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        disabled={pending}
+        className="inline-flex h-12 w-fit items-center justify-center rounded-full bg-accent px-6 text-base font-medium text-on-accent transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Review order request
+        {pending ? "Sending…" : "Review order request"}
       </button>
     </form>
   );
