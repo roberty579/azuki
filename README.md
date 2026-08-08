@@ -20,6 +20,33 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Linked intent development
+
+Requirements in `requirements/` carry stable IDs (`HOME-1`, `HOME-2`, …). Those IDs are the link
+between what was asked for and the code that delivers it, so any change can be traced back to the
+requirement it serves.
+
+| Where | How it is tagged | Example |
+|---|---|---|
+| Implementation (`.ts`, `.tsx`, `.css`) | `@implements` in a comment | `/** @implements HOME-2 — inline section list */` |
+| Tests (`__tests__/`, `e2e/`) | the ID in square brackets in the test title | `test("[HOME-2] lists every section inline", …)` |
+
+Rules:
+
+- **IDs are permanent.** Never renumber, and never reuse a retired ID — a stale tag pointing at a
+  different requirement is worse than no tag. Retire an entry in place and keep its number.
+- **One `@implements` tag can list several IDs**, comma-separated: `@implements HOME-2, HOME-3`.
+- **Every requirement needs at least one implementation tag and at least one test tag.**
+  `__tests__/traceability.test.ts` enforces this in both directions: an untagged requirement fails
+  the suite, and so does a tag naming an ID that no requirement defines.
+- To find the code behind a requirement, grep its ID. Requirements files deliberately do not list
+  file paths — such a list goes stale, while the tags cannot.
+
+Only `requirements/home_requirements.md` uses IDs so far. The other specs are not yet tagged, and
+files that exist purely as placeholders (the unbuilt route stubs) carry no tags.
+
+Run `npm run test` to check the links are intact.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
