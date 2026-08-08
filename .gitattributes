@@ -1,0 +1,17 @@
+# Line endings are pinned here so they do not depend on each developer's
+# core.autocrlf. Development happens on Windows, builds run on Linux; LF
+# everywhere keeps the two identical.
+* text=auto eol=lf
+
+# Binary — never touch the bytes.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+
+# Generated: collapse the diff noise, and never merge it by hand.
+package-lock.json -diff merge=binary linguist-generated
