@@ -60,3 +60,5 @@ Copy and catalogue are visibly-marked placeholders in `src/content/site.ts` and 
 The remaining four routes (`/schedule`, `/commission`, `/build-a-bunny`, `/portfolio`) are **one-screen "coming soon" stubs** (`src/components/coming-soon.tsx`) that exist only so the nav resolves.
 
 Money is integer cents everywhere (`src/lib/money.ts`); it becomes a string only at display.
+
+There is **no backend and no database yet** — every route prerenders. `docs/backend.md` holds the decisions already made about adding one (it belongs in this project, not a separate service; what forces it is Schedule/Commission/Admin, not the shop; the checkout contract a Server Action must enforce). Read it before starting any server-side work.
