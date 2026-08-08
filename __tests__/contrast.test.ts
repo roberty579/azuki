@@ -3,12 +3,15 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
 /**
- * The palette in app/globals.css is hand-edited, so these assert the token
+ * The palette in src/app/globals.css is hand-edited, so these assert the token
  * pairs that actually end up as text-on-background meet WCAG AA (4.5:1 for
  * body-size text) in both colour schemes.
  */
 
-const css = readFileSync(join(process.cwd(), "app", "globals.css"), "utf8");
+const css = readFileSync(
+  join(process.cwd(), "src", "app", "globals.css"),
+  "utf8",
+);
 
 function parseTokens(block: string): Record<string, string> {
   const tokens: Record<string, string> = {};

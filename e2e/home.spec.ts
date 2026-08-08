@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { navItems } from "../content/navigation";
-import { site } from "../content/site";
+import { navItems } from "../src/content/navigation";
+import { site } from "../src/content/site";
 import { usesInlineNav } from "./nav-helpers";
 
 test.beforeEach(async ({ page }) => {

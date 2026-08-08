@@ -17,7 +17,7 @@ const root = process.cwd();
 const SPEC = join("requirements", "home_requirements.md");
 const SELF = join("__tests__", "traceability.test.ts");
 
-const IMPLEMENTATION_DIRS = ["app", "components", "content"];
+const IMPLEMENTATION_DIRS = ["src"];
 const TEST_DIRS = ["__tests__", "e2e"];
 const SCANNED_EXTENSIONS = new Set([".ts", ".tsx", ".css"]);
 

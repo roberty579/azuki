@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: "jsdom",
-    setupFiles: ["./vitest.setup.ts"],
+    setupFiles: ["./__tests__/setup.ts"],
     globals: true,
     // e2e/ belongs to Playwright; running those specs under Vitest would hang.
     include: ["__tests__/**/*.test.{ts,tsx}"],

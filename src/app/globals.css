@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Palette for the "sophisticated but cute" direction in website-requirements.md §0:
+ * Palette for the "sophisticated but cute" direction in initial_requirements.md §0:
  * warm neutral ground, muted rose accent, soft sage secondary. Tailwind v4 is
  * configured CSS-first — there is no tailwind.config.*, so tokens live here.
  *

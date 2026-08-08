@@ -2,23 +2,80 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Edits to `src/app/page.tsx` hot-reload.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Use npm, not yarn/pnpm/bun — `package-lock.json` is committed and is what CI installs from.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
+
+```bash
+npm run dev        # dev server (Turbopack) → http://localhost:3000
+npm run build      # production build
+npm start          # serve the production build
+npm run lint       # eslint
+npm run typecheck  # tsc --noEmit
+```
+
+### Tests
+
+```bash
+npm run test       # unit + component tests (Vitest), one pass
+npm run test:watch # the same, re-running on save
+npm run test:e2e   # end-to-end tests (Playwright)
+```
+
+`npm run test:e2e` builds the app and starts a server itself — you do **not** need `npm run dev`
+running first. It will reuse a server already on port 3000, so if one is running from an older
+build, stop it first or you will test stale code.
+
+Narrowing a run:
+
+```bash
+npx vitest run __tests__/navbar.test.tsx     # one unit test file
+npx vitest run -t "HOME-4"                   # tests whose name matches
+npx playwright test e2e/navigation.spec.ts   # one e2e file
+npx playwright test --project=mobile         # one viewport (desktop | tablet | mobile)
+npx playwright test --ui                     # interactive runner
+```
+
+### Which layer to write in
+
+| | `__tests__/` (Vitest) | `e2e/` (Playwright) |
+|---|---|---|
+| Runs in | jsdom, no browser | real Chromium, real production build |
+| Sees CSS | **no** | yes |
+| Loads images | **no** | yes |
+| Speed | ~2s | ~10s |
+| Use for | component structure, props, events, data | layout, breakpoints, visibility, routing, images |
+
+jsdom applies no stylesheets, so it cannot tell whether something is hidden at a given
+breakpoint — those assertions have to be end-to-end. Playwright runs at three viewports:
+desktop (1280), tablet (900), and mobile (Pixel 5).
+
+Some behaviour only exists on one side of a breakpoint. Rather than skip such tests at runtime,
+scope them by filename so each project only collects what applies to it:
+
+| Filename | Runs on |
+|---|---|
+| `*.spec.ts` | every viewport |
+| `*.wide.spec.ts` | desktop only (≥1024px, the inline nav) |
+| `*.narrow.spec.ts` | tablet and mobile (<1024px, the hamburger) |
+
+The mapping is `testIgnore` in `playwright.config.ts`. Each scoped file also asserts in
+`beforeEach` that it landed on a matching viewport, so adding a project and forgetting its
+`testIgnore` fails loudly instead of passing vacuously. **A green run should report zero skipped
+tests** — a skip means something is misconfigured.
+
+The first `npm run test:e2e` on a new machine needs browsers installed:
+
+```bash
+npx playwright install --with-deps
+```
 
 ## Linked intent development
 

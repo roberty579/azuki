@@ -1,6 +1,6 @@
 # Home Page Requirements
 
-Source: section 2 ("Main / Home Page — User View") of `website-requirements.md`, expanded with the
+Source: section 2 ("Main / Home Page — User View") of `initial_requirements.md`, expanded with the
 decisions made while building the page. This file — not the root document — is authoritative for
 the home page.
 
@@ -27,9 +27,9 @@ At **1024px and above**, the header lists all six main sections
 no hamburger.
 
 **Acceptance:** at ≥1024px those links are visible and are exactly the sections in
-`content/navigation.ts`, each pointing at its route; the hamburger button is hidden.
+`src/content/navigation.ts`, each pointing at its route; the hamburger button is hidden.
 
-> **Amends the original spec.** Section 2 of `website-requirements.md` called for a hamburger at
+> **Amends the original spec.** Section 2 of `initial_requirements.md` called for a hamburger at
 > every width, and that shipped first. Seen on a desktop screen it hid where things were, so
 > discoverability won over consistency. `requirements/navigation_requirements.md` still describes
 > hamburger-only navigation and now contradicts this — it needs the same amendment, deferred
@@ -116,7 +116,7 @@ as an empty gap.
 
 ### HOME-11 — All copy lives in one typed content module
 
-Every customer-facing string, social URL, and gallery entry comes from `content/site.ts`.
+Every customer-facing string, social URL, and gallery entry comes from `src/content/site.ts`.
 Components and tests both read from it; neither hardcodes copy.
 
 **Acceptance:** the module is typed; the email parses as an email address; name, tagline, and blurb

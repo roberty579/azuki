@@ -1,62 +1,18 @@
 import { expect, test } from "@playwright/test";
-import { navItems } from "../content/navigation";
-import { site } from "../content/site";
-import { revealNav, usesInlineNav } from "./nav-helpers";
+import { navItems } from "../src/content/navigation";
+import { site } from "../src/content/site";
+import { revealNav } from "./nav-helpers";
+
+/**
+ * Navigation behaviour that holds at every width. Layout-specific behaviour
+ * lives in nav.wide.spec.ts and nav.narrow.spec.ts, which are scoped to the
+ * projects they apply to.
+ */
 
 /** The home route's <h1> is the business name; every stub uses its nav label. */
 function expectedHeading(item: (typeof navItems)[number]) {
   return item.href === "/" ? site.name : item.label;
 }
-
-test("[HOME-2] wide viewports list every section without opening anything", async ({
-  page,
-}) => {
-  await page.goto("/");
-  test.skip(!usesInlineNav(page), "This viewport collapses the nav.");
-
-  const nav = page.getByRole("navigation", { name: "Main" });
-  await expect(nav).toBeVisible();
-  await expect(nav.getByRole("link")).toHaveCount(navItems.length);
-
-  for (const item of navItems) {
-    await expect(nav.getByRole("link", { name: item.label })).toBeVisible();
-  }
-
-  // No hamburger competes with the inline list.
-  await expect(page.getByRole("button", { name: "Open menu" })).toBeHidden();
-});
-
-test("[HOME-3] narrow viewports keep the sections behind the hamburger", async ({
-  page,
-}) => {
-  await page.goto("/");
-  test.skip(usesInlineNav(page), "This viewport lists the nav inline.");
-
-  await expect(page.getByRole("navigation", { name: "Main" })).toBeHidden();
-
-  const panel = page.getByRole("navigation", { name: "Menu" });
-  await expect(panel).toBeHidden();
-
-  await page.getByRole("button", { name: "Open menu" }).click();
-
-  await expect(panel).toBeVisible();
-  await expect(panel.getByRole("link")).toHaveCount(navItems.length);
-});
-
-test("[HOME-3] Escape collapses the menu", async ({ page }) => {
-  await page.goto("/");
-  test.skip(usesInlineNav(page), "There is no collapsible panel to close.");
-
-  const panel = page.getByRole("navigation", { name: "Menu" });
-
-  await page.getByRole("button", { name: "Open menu" }).click();
-  await expect(panel).toBeVisible();
-
-  await page.keyboard.press("Escape");
-
-  await expect(panel).toBeHidden();
-  await expect(page.getByRole("button", { name: "Open menu" })).toBeVisible();
-});
 
 for (const item of navItems) {
   test(`[HOME-2] [HOME-3] the nav reaches ${item.label}`, async ({ page }) => {
