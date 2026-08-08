@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Placeholder image">
+  <rect width="800" height="800" fill="#f6ece6" />
+  <circle cx="400" cy="360" r="150" fill="#e0b7a8" />
+  <circle cx="340" cy="200" r="52" fill="#e0b7a8" />
+  <circle cx="460" cy="200" r="52" fill="#e0b7a8" />
+  <rect x="290" y="430" width="220" height="150" rx="28" fill="#a8b8a0" />
+  <g fill="none" stroke="#c98f7a" stroke-width="9" stroke-linecap="round" opacity="0.55">
+    <path d="M180 640q40-34 80 0t80 0t80 0t80 0t80 0t80 0" />
+    <path d="M180 690q40-34 80 0t80 0t80 0t80 0t80 0t80 0" />
+  </g>
+  <text x="400" y="756" font-family="system-ui, sans-serif" font-size="30" fill="#8a6a5c" text-anchor="middle">placeholder</text>
+</svg>
