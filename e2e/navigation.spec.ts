@@ -9,11 +9,6 @@ import { revealNav } from "./nav-helpers";
  * projects they apply to.
  */
 
-/** The home route's <h1> is the business name; every stub uses its nav label. */
-function expectedHeading(item: (typeof navItems)[number]) {
-  return item.href === "/" ? site.name : item.label;
-}
-
 for (const item of navItems) {
   test(`[HOME-2] [HOME-3] the nav reaches ${item.label}`, async ({ page }) => {
     await page.goto("/");
@@ -22,9 +17,24 @@ for (const item of navItems) {
     await nav.getByRole("link", { name: item.label }).click();
 
     await expect(page).toHaveURL(item.href);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-      expectedHeading(item),
-    );
+
+    /**
+     * A heading, but not a particular one.
+     *
+     * This used to assert the <h1> matched the nav label, which held only
+     * because every destination was a stub named after its link. A page's
+     * heading is written for the person reading it and a nav label for someone
+     * scanning six of them, so they legitimately differ — "Forms/Commissions"
+     * is a reasonable link and a poor title. Pinning them together would mean
+     * every page inherits its copy from the navigation.
+     *
+     * What the nav is responsible for is that the link goes to the right place
+     * and that something rendered there. Heading text belongs to each page's
+     * own spec.
+     */
+    const heading = page.getByRole("heading", { level: 1 });
+    await expect(heading).toHaveCount(1);
+    await expect(heading).not.toBeEmpty();
 
     // The panel must not linger over the page it just navigated to.
     await expect(page.getByRole("navigation", { name: "Menu" })).toBeHidden();

@@ -1,0 +1,111 @@
+[33mcommit c6336e417753d552f9246bb6a0fffc7a2e6e0189[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/portfolio-page[m[33m)[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 18:35:01 2026 -0400
+
+    Build the portfolio page
+    
+    `/portfolio` shows past work grouped by category, and `/portfolio/[slug]` gives
+    each piece a page with its yarn type, colour, and — where the pattern is not
+    the maker's own — a designer credit.
+    
+    A typed content module rather than a database table. docs/backend.md section 6
+    lists the portfolio as needing no server, and that still holds: this is
+    read-only content that never changes per request, so both routes prerender and
+    the build needs no database. The portfolio_items and portfolio_images tables
+    stay in the schema for whenever admin management arrives; moving to them is the
+    same one-file swap the shop demonstrated.
+    
+    Deliberately not built on the shop's components. A portfolio piece has no
+    price, no stock and no cart — it is past work, and the route onward is a
+    commission. Sharing ProductCard would have meant threading "is this for sale?"
+    through both pages, and the two answer different questions. A test asserts no
+    portfolio item carries priceCents or stock, so the distinction cannot erode
+    quietly.
+    
+    Categories are data, not code. Clothes and Plushies have items; Crochet,
+    Engineering and Jewelry are declared, empty, and do not render — so launching
+    one is a content change. The grouping helper drops empty categories, and tests
+    cover both that it loses no items and that it duplicates none.
+    
+    The designer credit renders only when there is one. An empty label or an
+    "unknown" would imply a missing attribution where the design is the maker's
+    own, so the placeholder data deliberately contains both cases and the tests
+    assert both renderings.
+    
+    Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01Mq1YxVFY7uNb4pMLsgJBJa
+
+[33mcommit 7c143b7bdd764bb57dc908e5645a0f4eb1376bbc[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m, [m[1;32mfeat/commission-form[m[33m)[m
+Merge: 218c3f9 46333bf
+Author: roberty579 <70171884+roberty579@users.noreply.github.com>
+Date:   Sat Aug 8 16:56:42 2026 -0400
+
+    Merge pull request #3 from roberty579/feat/build-a-bunny
+    
+    build a bunny
+
+[33mcommit 46333bf5d67b8f403782731688df473c20a20ab8[m[33m ([m[1;31morigin/feat/build-a-bunny[m[33m, [m[1;32mfeat/build-a-bunny[m[33m)[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 16:56:17 2026 -0400
+
+    build a bunny
+
+[33mcommit 218c3f96388097e0eacae530aea21f40a91bc9c1[m
+Merge: 73a5f30 e5e136c
+Author: roberty579 <70171884+roberty579@users.noreply.github.com>
+Date:   Sat Aug 8 13:14:25 2026 -0400
+
+    Merge pull request #2 from roberty579/feat/shop-page
+    
+    [FEATURE] Shop Page
+
+[33mcommit e5e136c695e1c0b67a09d82252ed216c3331a7da[m[33m ([m[1;31morigin/feat/shop-page[m[33m, [m[1;32mfeat/shop-page[m[33m)[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 13:11:13 2026 -0400
+
+    consideration for backend implementation
+
+[33mcommit 14793fd26b8a71591417eb2bdefa54ca2570bf80[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 12:46:02 2026 -0400
+
+    initial implementation of shop feature, would liekly need database and end proccessing once and order is submitted
+
+[33mcommit 73a5f3030b67a94e4f70df83c6a420aeba930483[m
+Merge: e3a559c 8bcf073
+Author: roberty579 <70171884+roberty579@users.noreply.github.com>
+Date:   Sat Aug 8 12:07:16 2026 -0400
+
+    Merge pull request #1 from roberty579/feat/home-navigation
+    
+    [FEATURE] Home Page + Navigation
+
+[33mcommit 8bcf073f5fff932dc5e03b59c7b57151c0b65725[m[33m ([m[1;31morigin/feat/home-navigation[m[33m, [m[1;32mfeat/home-navigation[m[33m)[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 12:05:51 2026 -0400
+
+    update readme and claude.md files, updated tests behavior to not include tests that are skipped
+
+[33mcommit b3b7544d9d69ef6dc9c6406f65167a9918f7c671[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 11:47:10 2026 -0400
+
+    last updates
+
+[33mcommit 9edca14df44a020c912000a38d491ef0af60f2ac[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 11:44:26 2026 -0400
+
+    requirements and setup for playwright
+
+[33mcommit 3926b2c4e59706c4d59c6f6824a923f7ee992c56[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Sat Aug 8 11:42:48 2026 -0400
+
+    application for initial pass of home page
+
+[33mcommit e3a559cfe10b7f56d506d26fbf3f6f0fd5021b07[m
+Author: Robert Yamasaki <ryamasaki151@gmail.com>
+Date:   Mon Jul 20 20:48:43 2026 -0400
+
+    initial commit
